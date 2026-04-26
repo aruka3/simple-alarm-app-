@@ -3,292 +3,431 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>アラーム</title>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
+  <title>ポケモンシャッフル</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: "Nunito", -apple-system, sans-serif;
-      background: linear-gradient(135deg, #fce4ec 0%, #f3e5f5 50%, #e3f2fd 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0a0a0f;
+      color: #f0f0f0;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
+      gap: 48px;
+      padding: 56px 24px 72px;
+    }
+
+    header {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    header h1 {
+      font-size: 28px;
+      font-weight: 200;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+    }
+
+    header p {
+      font-size: 13px;
+      color: #555;
+      letter-spacing: 1px;
+    }
+
+    #cards-grid {
+      display: flex;
+      flex-wrap: wrap;
       justify-content: center;
-      gap: 32px;
+      gap: 20px;
     }
 
-    .emoji-top {
-      font-size: 48px;
-      animation: bounce 2s ease-in-out infinite;
+    .card-flip {
+      width: 160px;
+      height: 220px;
+      perspective: 800px;
+      cursor: pointer;
     }
 
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-8px); }
+    .card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.55s cubic-bezier(0.45, 0.05, 0.55, 0.95);
     }
 
-    #clock {
-      font-size: 64px;
-      font-weight: 800;
-      color: #7c3aed;
-      letter-spacing: 2px;
-      font-variant-numeric: tabular-nums;
-      text-shadow: 0 2px 12px rgba(124, 58, 237, 0.2);
+    .card-flip.flipped .card-inner {
+      transform: rotateY(180deg);
     }
 
-    .card {
-      background: #fff;
-      border-radius: 28px;
-      padding: 36px 44px;
+    .card-front,
+    .card-back {
+      position: absolute;
+      inset: 0;
+      border-radius: 14px;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      overflow: hidden;
+    }
+
+    .card-front {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      border: 1px solid #2a2a4a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pokeball {
+      width: 80px;
+      height: 80px;
+      position: relative;
+      opacity: 0.35;
+    }
+
+    .pokeball::before,
+    .pokeball::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+    }
+
+    .pokeball::before {
+      inset: 0;
+      border: 3px solid #f0f0f0;
+    }
+
+    .pokeball::after {
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 3px;
+      margin-top: -1.5px;
+      background: #f0f0f0;
+    }
+
+    .pokeball-top {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 50%;
+      background: #e53e3e44;
+      border-radius: 80px 80px 0 0;
+    }
+
+    .pokeball-center {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: #0a0a0f;
+      border: 3px solid #f0f0f0;
+      z-index: 1;
+    }
+
+    .card-back {
+      background: #141420;
+      border: 1px solid #2a2a3a;
+      transform: rotateY(180deg);
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 20px;
-      min-width: 320px;
-      box-shadow: 0 8px 32px rgba(124, 58, 237, 0.12), 0 2px 8px rgba(0,0,0,0.06);
+      justify-content: center;
+      gap: 8px;
+      padding: 16px 12px;
     }
 
-    .card h2 {
-      font-size: 13px;
+    .poke-num {
+      font-size: 10px;
+      color: #444;
+      letter-spacing: 1px;
+      align-self: flex-start;
+    }
+
+    .poke-sprite {
+      width: 80px;
+      height: 80px;
+      image-rendering: pixelated;
+      filter: drop-shadow(0 0 8px rgba(255,255,255,0.1));
+    }
+
+    .poke-name {
+      font-size: 15px;
+      font-weight: 400;
+      letter-spacing: 1px;
+      text-transform: capitalize;
+      text-align: center;
+    }
+
+    .poke-types {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .type-badge {
+      font-size: 9px;
       font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 20px;
+    }
+
+    .poke-stats {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    .mini-stat {
+      display: grid;
+      grid-template-columns: 28px 24px 1fr;
+      align-items: center;
+      gap: 4px;
+      font-size: 9px;
+    }
+
+    .mini-stat-name { color: #555; text-align: right; text-transform: uppercase; }
+    .mini-stat-val  { color: #888; text-align: right; font-variant-numeric: tabular-nums; }
+
+    .mini-bar-bg {
+      background: #222;
+      border-radius: 3px;
+      height: 4px;
+      overflow: hidden;
+    }
+
+    .mini-bar { height: 100%; border-radius: 3px; }
+
+    .card-back.loading .poke-sprite,
+    .card-back.loading .poke-name,
+    .card-back.loading .poke-types,
+    .card-back.loading .poke-stats { visibility: hidden; }
+
+    .card-back.loading::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 14px;
+      background: linear-gradient(90deg, transparent 0%, #ffffff08 50%, transparent 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s infinite;
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: -200% 0; }
+      100% { background-position:  200% 0; }
+    }
+
+    #shuffle-btn {
+      padding: 16px 48px;
+      border-radius: 12px;
+      border: none;
+      background: #f0f0f0;
+      color: #0a0a0f;
+      font-size: 16px;
+      font-weight: 600;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: #c4b5fd;
-    }
-
-    #alarm-time {
-      font-size: 44px;
-      font-weight: 800;
-      font-family: "Nunito", sans-serif;
-      background: none;
-      border: none;
-      border-bottom: 3px solid #e9d5ff;
-      color: #6d28d9;
-      text-align: center;
-      width: 180px;
-      padding: 8px 0;
-      outline: none;
       cursor: pointer;
-      transition: border-color 0.2s;
+      transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
     }
 
-    #alarm-time:focus {
-      border-bottom-color: #7c3aed;
+    #shuffle-btn:hover {
+      background: #fff;
+      box-shadow: 0 0 32px rgba(240,240,240,0.15);
     }
 
-    #toggle-btn {
-      width: 100%;
-      padding: 14px;
-      border-radius: 14px;
-      border: none;
-      font-size: 16px;
-      font-weight: 700;
-      font-family: "Nunito", sans-serif;
-      cursor: pointer;
-      transition: transform 0.15s, box-shadow 0.15s;
-      background: linear-gradient(135deg, #a78bfa, #7c3aed);
-      color: #fff;
-      box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);
+    #shuffle-btn:active { transform: scale(0.97); }
+
+    #shuffle-btn:disabled {
+      background: #2a2a2a;
+      color: #555;
+      cursor: default;
+      box-shadow: none;
+      transform: none;
     }
 
-    #toggle-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 18px rgba(124, 58, 237, 0.45);
-    }
+    footer { font-size: 11px; color: #333; letter-spacing: 1px; }
 
-    #toggle-btn:active {
-      transform: scale(0.97);
-    }
+    .type-normal   { background: #9ca3af22; color: #9ca3af; border: 1px solid #9ca3af44; }
+    .type-fire     { background: #ef444422; color: #ef4444; border: 1px solid #ef444444; }
+    .type-water    { background: #3b82f622; color: #60a5fa; border: 1px solid #3b82f644; }
+    .type-electric { background: #eab30822; color: #fbbf24; border: 1px solid #eab30844; }
+    .type-grass    { background: #22c55e22; color: #4ade80; border: 1px solid #22c55e44; }
+    .type-ice      { background: #67e8f922; color: #67e8f9; border: 1px solid #67e8f944; }
+    .type-fighting { background: #dc262622; color: #f87171; border: 1px solid #dc262644; }
+    .type-poison   { background: #a855f722; color: #c084fc; border: 1px solid #a855f744; }
+    .type-ground   { background: #d9770622; color: #fbbf24; border: 1px solid #d9770644; }
+    .type-flying   { background: #818cf822; color: #a5b4fc; border: 1px solid #818cf844; }
+    .type-psychic  { background: #ec489922; color: #f472b6; border: 1px solid #ec489944; }
+    .type-bug      { background: #84cc1622; color: #a3e635; border: 1px solid #84cc1644; }
+    .type-rock     { background: #92400e22; color: #d97706; border: 1px solid #92400e44; }
+    .type-ghost    { background: #6d28d922; color: #a78bfa; border: 1px solid #6d28d944; }
+    .type-dragon   { background: #4f46e522; color: #818cf8; border: 1px solid #4f46e544; }
+    .type-dark     { background: #1c191788; color: #a8a29e; border: 1px solid #44403c; }
+    .type-steel    { background: #64748b22; color: #94a3b8; border: 1px solid #64748b44; }
+    .type-fairy    { background: #f9a8d422; color: #f9a8d4; border: 1px solid #f9a8d444; }
 
-    #toggle-btn.active {
-      background: linear-gradient(135deg, #fb7185, #e11d48);
-      box-shadow: 0 4px 14px rgba(225, 29, 72, 0.35);
-    }
+    .bar-hp      { background: #4ade80; }
+    .bar-attack  { background: #f87171; }
+    .bar-defense { background: #60a5fa; }
+    .bar-spatk   { background: #c084fc; }
+    .bar-spdef   { background: #67e8f9; }
+    .bar-speed   { background: #fbbf24; }
 
-    #toggle-btn.active:hover {
-      box-shadow: 0 6px 18px rgba(225, 29, 72, 0.45);
-    }
-
-    #status {
-      font-size: 13px;
-      font-weight: 600;
-      color: #c4b5fd;
-      height: 18px;
-    }
-
-    #status.set {
-      color: #34d399;
-    }
-
-    #status.ringing {
-      color: #f59e0b;
-      animation: pulse 0.8s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
-
-    #dismiss-btn {
-      display: none;
-      width: 100%;
-      padding: 14px;
-      border-radius: 14px;
-      border: 2.5px solid #fbbf24;
-      background: #fffbeb;
-      color: #d97706;
-      font-size: 16px;
-      font-weight: 700;
-      font-family: "Nunito", sans-serif;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.15s;
-    }
-
-    #dismiss-btn:hover {
-      background: #fef3c7;
-      transform: translateY(-2px);
-    }
-
-    body.ringing {
-      animation: flash 0.8s ease-in-out infinite;
-    }
-
-    @keyframes flash {
-      0%, 100% { background: linear-gradient(135deg, #fce4ec 0%, #f3e5f5 50%, #e3f2fd 100%); }
-      50% { background: linear-gradient(135deg, #fef9c3 0%, #fce4ec 50%, #fef3c7 100%); }
+    @media (max-width: 480px) {
+      .card-flip { width: 140px; height: 195px; }
+      .poke-sprite { width: 68px; height: 68px; }
     }
   </style>
 </head>
 <body>
-  <div class="emoji-top">⏰</div>
-  <div id="clock">00:00:00</div>
 
-  <div class="card">
-    <h2>アラーム設定</h2>
-    <input type="time" id="alarm-time" value="07:00" />
-    <div id="status">未設定</div>
-    <button id="toggle-btn">✨ セット</button>
-    <button id="dismiss-btn">🔕 止める</button>
-  </div>
+  <header>
+    <h1>ポケモンシャッフル</h1>
+    <p>カードをクリックして1枚ずつ、またはシャッフルで一気にめくろう</p>
+  </header>
+
+  <div id="cards-grid"></div>
+
+  <button id="shuffle-btn">シャッフル</button>
+
+  <footer>Data: PokéAPI &nbsp;·&nbsp; No. 1–1025</footer>
 
   <script>
-    const clockEl = document.getElementById("clock");
-    const alarmInput = document.getElementById("alarm-time");
-    const toggleBtn = document.getElementById("toggle-btn");
-    const dismissBtn = document.getElementById("dismiss-btn");
-    const statusEl = document.getElementById("status");
+    const CARD_COUNT  = 5;
+    const MAX_POKEMON = 1025;
+    const STAGGER_MS  = 100;
 
-    let alarmActive = false;
-    let ringing = false;
-    let audioCtx = null;
-    let alarmNodes = [];
+    const STAT_META = {
+      hp:               { label: "HP",  bar: "bar-hp" },
+      attack:           { label: "ATK", bar: "bar-attack" },
+      defense:          { label: "DEF", bar: "bar-defense" },
+      "special-attack": { label: "SpA", bar: "bar-spatk" },
+      "special-defense":{ label: "SpD", bar: "bar-spdef" },
+      speed:            { label: "SPD", bar: "bar-speed" },
+    };
 
-    function pad(n) {
-      return String(n).padStart(2, "0");
-    }
+    const grid       = document.getElementById("cards-grid");
+    const shuffleBtn = document.getElementById("shuffle-btn");
 
-    function tick() {
-      const now = new Date();
-      const hh = pad(now.getHours());
-      const mm = pad(now.getMinutes());
-      const ss = pad(now.getSeconds());
-      clockEl.textContent = `${hh}:${mm}:${ss}`;
+    const cards = Array.from({ length: CARD_COUNT }, () => {
+      const flip = document.createElement("div");
+      flip.className = "card-flip";
+      flip.innerHTML = `
+        <div class="card-inner">
+          <div class="card-front">
+            <div class="pokeball">
+              <div class="pokeball-top"></div>
+              <div class="pokeball-center"></div>
+            </div>
+          </div>
+          <div class="card-back loading">
+            <span class="poke-num"></span>
+            <img class="poke-sprite" src="" alt="" />
+            <span class="poke-name"></span>
+            <div class="poke-types"></div>
+            <div class="poke-stats"></div>
+          </div>
+        </div>`;
+      grid.appendChild(flip);
+      return flip;
+    });
 
-      if (alarmActive && !ringing) {
-        const alarmVal = alarmInput.value;
-        const currentHHMM = `${hh}:${mm}`;
-        if (currentHHMM === alarmVal && now.getSeconds() === 0) {
-          triggerAlarm();
-        }
-      }
-    }
-
-    function triggerAlarm() {
-      ringing = true;
-      document.body.classList.add("ringing");
-      statusEl.textContent = "🔔 アラーム！";
-      statusEl.className = "ringing";
-      dismissBtn.style.display = "block";
-      toggleBtn.style.display = "none";
-      startAlarmSound();
-    }
-
-    function startAlarmSound() {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      playBeepLoop();
-    }
-
-    function playBeepLoop() {
-      if (!ringing) return;
-      const freqs = [880, 1100, 880, 1100];
-      let time = audioCtx.currentTime;
-      alarmNodes = [];
-      freqs.forEach((freq, i) => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.type = "sine";
-        osc.frequency.value = freq;
-        const start = time + i * 0.25;
-        const end = start + 0.2;
-        gain.gain.setValueAtTime(0, start);
-        gain.gain.linearRampToValueAtTime(0.3, start + 0.01);
-        gain.gain.linearRampToValueAtTime(0, end);
-        osc.start(start);
-        osc.stop(end);
-        alarmNodes.push(osc);
+    cards.forEach(card => {
+      card.addEventListener("click", () => {
+        if (card.dataset.busy === "1") return;
+        reshuffleCard(card, 0);
       });
-      setTimeout(() => { if (ringing) playBeepLoop(); }, 1200);
-    }
-
-    function stopAlarmSound() {
-      alarmNodes.forEach(n => { try { n.stop(); } catch (_) {} });
-      alarmNodes = [];
-      if (audioCtx) {
-        audioCtx.close();
-        audioCtx = null;
-      }
-    }
-
-    dismissBtn.addEventListener("click", () => {
-      ringing = false;
-      alarmActive = false;
-      document.body.classList.remove("ringing");
-      stopAlarmSound();
-      dismissBtn.style.display = "none";
-      toggleBtn.style.display = "block";
-      toggleBtn.textContent = "✨ セット";
-      toggleBtn.classList.remove("active");
-      statusEl.textContent = "未設定";
-      statusEl.className = "";
     });
 
-    toggleBtn.addEventListener("click", () => {
-      if (!alarmActive) {
-        alarmActive = true;
-        toggleBtn.textContent = "🔴 解除";
-        toggleBtn.classList.add("active");
-        statusEl.textContent = `${alarmInput.value} にアラーム設定済み`;
-        statusEl.className = "set";
-      } else {
-        alarmActive = false;
-        toggleBtn.textContent = "✨ セット";
-        toggleBtn.classList.remove("active");
-        statusEl.textContent = "未設定";
-        statusEl.className = "";
-      }
-    });
+    shuffleBtn.addEventListener("click", reshuffleAll);
 
-    setInterval(tick, 1000);
-    tick();
+    function randomId() {
+      return Math.floor(Math.random() * MAX_POKEMON) + 1;
+    }
+
+    async function fetchPokemon(id) {
+      const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
+      if (!res.ok) throw new Error("fetch failed");
+      return res.json();
+    }
+
+    function renderBack(card, data) {
+      const back = card.querySelector(".card-back");
+      back.querySelector(".poke-num").textContent  = `No. ${String(data.id).padStart(4, "0")}`;
+      back.querySelector(".poke-name").textContent = data.name;
+
+      const sprite = back.querySelector(".poke-sprite");
+      sprite.src = data.sprites.front_default || "";
+      sprite.alt = data.name;
+
+      const typesEl = back.querySelector(".poke-types");
+      typesEl.innerHTML = "";
+      data.types.forEach(t => {
+        const b = document.createElement("span");
+        b.className   = `type-badge type-${t.type.name}`;
+        b.textContent = t.type.name;
+        typesEl.appendChild(b);
+      });
+
+      const statsEl = back.querySelector(".poke-stats");
+      statsEl.innerHTML = "";
+      data.stats.forEach(s => {
+        const meta = STAT_META[s.stat.name] || { label: s.stat.name.slice(0, 3).toUpperCase(), bar: "bar-hp" };
+        const pct  = Math.min(100, Math.round(s.base_stat / 255 * 100));
+        statsEl.insertAdjacentHTML("beforeend", `
+          <div class="mini-stat">
+            <span class="mini-stat-name">${meta.label}</span>
+            <span class="mini-stat-val">${s.base_stat}</span>
+            <div class="mini-bar-bg"><div class="mini-bar ${meta.bar}" style="width:${pct}%"></div></div>
+          </div>`);
+      });
+
+      back.classList.remove("loading");
+    }
+
+    async function reshuffleCard(card, delayMs) {
+      card.dataset.busy = "1";
+      const back = card.querySelector(".card-back");
+
+      card.classList.remove("flipped");
+      back.classList.add("loading");
+
+      await sleep(600 + delayMs);
+
+      try {
+        const data = await fetchPokemon(randomId());
+        renderBack(card, data);
+      } catch (_) {
+        back.querySelector(".poke-name").textContent = "エラー";
+        back.classList.remove("loading");
+      }
+
+      await sleep(80);
+      card.classList.add("flipped");
+      card.dataset.busy = "0";
+    }
+
+    async function reshuffleAll() {
+      shuffleBtn.disabled = true;
+      await Promise.all(cards.map((card, i) => reshuffleCard(card, i * STAGGER_MS)));
+      shuffleBtn.disabled = false;
+    }
+
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    reshuffleAll();
   </script>
 </body>
 </html>
