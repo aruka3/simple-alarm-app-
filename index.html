@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>アラーム</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f0f0f;
+      color: #f0f0f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 48px;
+    }
+
+    #clock {
+      font-size: 72px;
+      font-weight: 200;
+      letter-spacing: 4px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 16px;
+      padding: 32px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      min-width: 320px;
+    }
+
+    .card h2 {
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #666;
+    }
+
+    #alarm-time {
+      font-size: 48px;
+      font-weight: 200;
+      background: none;
+      border: none;
+      border-bottom: 1px solid #333;
+      color: #f0f0f0;
+      text-align: center;
+      width: 180px;
+      padding: 8px 0;
+      outline: none;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    #alarm-time:focus {
+      border-bottom-color: #fff;
+    }
+
+    #toggle-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 10px;
+      border: none;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      background: #f0f0f0;
+      color: #0f0f0f;
+    }
+
+    #toggle-btn:hover {
+      background: #fff;
+    }
+
+    #toggle-btn:active {
+      transform: scale(0.98);
+    }
+
+    #toggle-btn.active {
+      background: #ef4444;
+      color: #fff;
+    }
+
+    #toggle-btn.active:hover {
+      background: #dc2626;
+    }
+
+    #status {
+      font-size: 13px;
+      color: #555;
+      height: 18px;
+    }
+
+    #status.set {
+      color: #4ade80;
+    }
+
+    #status.ringing {
+      color: #f59e0b;
+      animation: pulse 0.8s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    #dismiss-btn {
+      display: none;
+      width: 100%;
+      padding: 14px;
+      border-radius: 10px;
+      border: 2px solid #f59e0b;
+      background: transparent;
+      color: #f59e0b;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    #dismiss-btn:hover {
+      background: #f59e0b22;
+    }
+
+    body.ringing {
+      animation: flash 0.8s ease-in-out infinite;
+    }
+
+    @keyframes flash {
+      0%, 100% { background: #0f0f0f; }
+      50% { background: #1a0f00; }
+    }
+  </style>
+</head>
+<body>
+  <div id="clock">00:00:00</div>
+
+  <div class="card">
+    <h2>アラーム設定</h2>
+    <input type="time" id="alarm-time" value="07:00" />
+    <div id="status">未設定</div>
+    <button id="toggle-btn">セット</button>
+    <button id="dismiss-btn">止める</button>
+  </div>
+
+  <script>
+    const clockEl = document.getElementById("clock");
+    const alarmInput = document.getElementById("alarm-time");
+    const toggleBtn = document.getElementById("toggle-btn");
+    const dismissBtn = document.getElementById("dismiss-btn");
+    const statusEl = document.getElementById("status");
+
+    let alarmActive = false;
+    let ringing = false;
+    let audioCtx = null;
+    let alarmNodes = [];
+
+    function pad(n) {
+      return String(n).padStart(2, "0");
+    }
+
+    function tick() {
+      const now = new Date();
+      const hh = pad(now.getHours());
+      const mm = pad(now.getMinutes());
+      const ss = pad(now.getSeconds());
+      clockEl.textContent = `${hh}:${mm}:${ss}`;
+
+      if (alarmActive && !ringing) {
+        const alarmVal = alarmInput.value;
+        const currentHHMM = `${hh}:${mm}`;
+        if (currentHHMM === alarmVal && now.getSeconds() === 0) {
+          triggerAlarm();
+        }
+      }
+    }
+
+    function triggerAlarm() {
+      ringing = true;
+      document.body.classList.add("ringing");
+      statusEl.textContent = "アラーム！";
+      statusEl.className = "ringing";
+      dismissBtn.style.display = "block";
+      toggleBtn.style.display = "none";
+      startAlarmSound();
+    }
+
+    function startAlarmSound() {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      playBeepLoop();
+    }
+
+    function playBeepLoop() {
+      if (!ringing) return;
+      const freqs = [880, 1100, 880, 1100];
+      let time = audioCtx.currentTime;
+      alarmNodes = [];
+      freqs.forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        const start = time + i * 0.25;
+        const end = start + 0.2;
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(0.3, start + 0.01);
+        gain.gain.linearRampToValueAtTime(0, end);
+        osc.start(start);
+        osc.stop(end);
+        alarmNodes.push(osc);
+      });
+      setTimeout(() => { if (ringing) playBeepLoop(); }, 1200);
+    }
+
+    function stopAlarmSound() {
+      alarmNodes.forEach(n => { try { n.stop(); } catch (_) {} });
+      alarmNodes = [];
+      if (audioCtx) {
+        audioCtx.close();
+        audioCtx = null;
+      }
+    }
+
+    dismissBtn.addEventListener("click", () => {
+      ringing = false;
+      alarmActive = false;
+      document.body.classList.remove("ringing");
+      stopAlarmSound();
+      dismissBtn.style.display = "none";
+      toggleBtn.style.display = "block";
+      toggleBtn.textContent = "セット";
+      toggleBtn.classList.remove("active");
+      statusEl.textContent = "未設定";
+      statusEl.className = "";
+    });
+
+    toggleBtn.addEventListener("click", () => {
+      if (!alarmActive) {
+        alarmActive = true;
+        toggleBtn.textContent = "解除";
+        toggleBtn.classList.add("active");
+        statusEl.textContent = `${alarmInput.value} にアラーム設定済み`;
+        statusEl.className = "set";
+      } else {
+        alarmActive = false;
+        toggleBtn.textContent = "セット";
+        toggleBtn.classList.remove("active");
+        statusEl.textContent = "未設定";
+        statusEl.className = "";
+      }
+    });
+
+    setInterval(tick, 1000);
+    tick();
+  </script>
+</body>
+</html>
