@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>アラーム</title>
+  <title>アラーム & ポケモン図鑑</title>
   <style>
     * {
       box-sizing: border-box;
@@ -21,6 +21,7 @@
       align-items: center;
       justify-content: center;
       gap: 48px;
+      padding: 48px 16px;
     }
 
     #clock {
@@ -40,6 +41,8 @@
       align-items: center;
       gap: 24px;
       min-width: 320px;
+      width: 100%;
+      max-width: 400px;
     }
 
     .card h2 {
@@ -50,6 +53,7 @@
       color: #666;
     }
 
+    /* Alarm styles */
     #alarm-time {
       font-size: 48px;
       font-weight: 200;
@@ -145,11 +149,204 @@
       0%, 100% { background: #0f0f0f; }
       50% { background: #1a0f00; }
     }
+
+    /* Pokémon search styles */
+    .pokemon-search-row {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+    }
+
+    #pokemon-input {
+      flex: 1;
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 10px;
+      color: #f0f0f0;
+      font-size: 15px;
+      padding: 10px 14px;
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+
+    #pokemon-input::placeholder {
+      color: #444;
+    }
+
+    #pokemon-input:focus {
+      border-color: #555;
+    }
+
+    #search-btn {
+      padding: 10px 18px;
+      border-radius: 10px;
+      border: none;
+      background: #f0f0f0;
+      color: #0f0f0f;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    #search-btn:hover {
+      background: #fff;
+    }
+
+    #search-btn:active {
+      transform: scale(0.97);
+    }
+
+    #search-btn:disabled {
+      background: #333;
+      color: #666;
+      cursor: default;
+      transform: none;
+    }
+
+    #pokemon-result {
+      width: 100%;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    #pokemon-result.visible {
+      display: flex;
+    }
+
+    #pokemon-sprite {
+      width: 96px;
+      height: 96px;
+      image-rendering: pixelated;
+    }
+
+    #pokemon-name {
+      font-size: 22px;
+      font-weight: 300;
+      letter-spacing: 1px;
+      text-transform: capitalize;
+    }
+
+    #pokemon-id {
+      font-size: 12px;
+      color: #555;
+      margin-top: -12px;
+    }
+
+    .pokemon-types {
+      display: flex;
+      gap: 8px;
+    }
+
+    .type-badge {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    .pokemon-meta {
+      display: flex;
+      gap: 24px;
+      font-size: 13px;
+      color: #888;
+    }
+
+    .pokemon-meta span strong {
+      color: #ccc;
+      font-weight: 500;
+    }
+
+    .stats-grid {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .stat-row {
+      display: grid;
+      grid-template-columns: 72px 36px 1fr;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+
+    .stat-name {
+      color: #666;
+      text-align: right;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-val {
+      color: #ccc;
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+
+    .stat-bar-bg {
+      background: #222;
+      border-radius: 4px;
+      height: 6px;
+      overflow: hidden;
+    }
+
+    .stat-bar {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.4s ease;
+    }
+
+    #pokemon-error {
+      font-size: 13px;
+      color: #ef4444;
+      display: none;
+    }
+
+    #pokemon-error.visible {
+      display: block;
+    }
+
+    /* Type colours */
+    .type-normal   { background: #9ca3af22; color: #9ca3af; border: 1px solid #9ca3af44; }
+    .type-fire     { background: #ef444422; color: #ef4444; border: 1px solid #ef444444; }
+    .type-water    { background: #3b82f622; color: #60a5fa; border: 1px solid #3b82f644; }
+    .type-electric { background: #eab30822; color: #fbbf24; border: 1px solid #eab30844; }
+    .type-grass    { background: #22c55e22; color: #4ade80; border: 1px solid #22c55e44; }
+    .type-ice      { background: #67e8f922; color: #67e8f9; border: 1px solid #67e8f944; }
+    .type-fighting { background: #dc262622; color: #f87171; border: 1px solid #dc262644; }
+    .type-poison   { background: #a855f722; color: #c084fc; border: 1px solid #a855f744; }
+    .type-ground   { background: #d97706;   color: #fbbf24; border: 1px solid #d9770644; background: #d9770622; }
+    .type-flying   { background: #818cf822; color: #a5b4fc; border: 1px solid #818cf844; }
+    .type-psychic  { background: #ec489922; color: #f472b6; border: 1px solid #ec489944; }
+    .type-bug      { background: #84cc1622; color: #a3e635; border: 1px solid #84cc1644; }
+    .type-rock     { background: #92400e22; color: #d97706; border: 1px solid #92400e44; }
+    .type-ghost    { background: #6d28d922; color: #a78bfa; border: 1px solid #6d28d944; }
+    .type-dragon   { background: #4f46e522; color: #818cf8; border: 1px solid #4f46e544; }
+    .type-dark     { background: #1c1917;   color: #a8a29e; border: 1px solid #44403c; }
+    .type-steel    { background: #64748b22; color: #94a3b8; border: 1px solid #64748b44; }
+    .type-fairy    { background: #f9a8d422; color: #f9a8d4; border: 1px solid #f9a8d444; }
+
+    /* Stat bar colours by stat */
+    .bar-hp      { background: #4ade80; }
+    .bar-attack  { background: #f87171; }
+    .bar-defense { background: #60a5fa; }
+    .bar-spatk   { background: #c084fc; }
+    .bar-spdef   { background: #67e8f9; }
+    .bar-speed   { background: #fbbf24; }
   </style>
 </head>
 <body>
   <div id="clock">00:00:00</div>
 
+  <!-- Alarm card -->
   <div class="card">
     <h2>アラーム設定</h2>
     <input type="time" id="alarm-time" value="07:00" />
@@ -158,33 +355,54 @@
     <button id="dismiss-btn">止める</button>
   </div>
 
+  <!-- Pokémon search card -->
+  <div class="card">
+    <h2>ポケモン図鑑</h2>
+    <div class="pokemon-search-row">
+      <input
+        type="text"
+        id="pokemon-input"
+        placeholder="名前 or 番号（例: pikachu, 25）"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <button id="search-btn">検索</button>
+    </div>
+    <div id="pokemon-error"></div>
+    <div id="pokemon-result">
+      <img id="pokemon-sprite" src="" alt="" />
+      <div id="pokemon-name"></div>
+      <div id="pokemon-id"></div>
+      <div class="pokemon-types" id="pokemon-types"></div>
+      <div class="pokemon-meta" id="pokemon-meta"></div>
+      <div class="stats-grid" id="pokemon-stats"></div>
+    </div>
+  </div>
+
   <script>
-    const clockEl = document.getElementById("clock");
+    /* ── Alarm ── */
+    const clockEl    = document.getElementById("clock");
     const alarmInput = document.getElementById("alarm-time");
-    const toggleBtn = document.getElementById("toggle-btn");
+    const toggleBtn  = document.getElementById("toggle-btn");
     const dismissBtn = document.getElementById("dismiss-btn");
-    const statusEl = document.getElementById("status");
+    const statusEl   = document.getElementById("status");
 
     let alarmActive = false;
-    let ringing = false;
-    let audioCtx = null;
-    let alarmNodes = [];
+    let ringing     = false;
+    let audioCtx    = null;
+    let alarmNodes  = [];
 
-    function pad(n) {
-      return String(n).padStart(2, "0");
-    }
+    function pad(n) { return String(n).padStart(2, "0"); }
 
     function tick() {
       const now = new Date();
-      const hh = pad(now.getHours());
-      const mm = pad(now.getMinutes());
-      const ss = pad(now.getSeconds());
+      const hh  = pad(now.getHours());
+      const mm  = pad(now.getMinutes());
+      const ss  = pad(now.getSeconds());
       clockEl.textContent = `${hh}:${mm}:${ss}`;
 
       if (alarmActive && !ringing) {
-        const alarmVal = alarmInput.value;
-        const currentHHMM = `${hh}:${mm}`;
-        if (currentHHMM === alarmVal && now.getSeconds() === 0) {
+        if (`${hh}:${mm}` === alarmInput.value && now.getSeconds() === 0) {
           triggerAlarm();
         }
       }
@@ -194,9 +412,9 @@
       ringing = true;
       document.body.classList.add("ringing");
       statusEl.textContent = "アラーム！";
-      statusEl.className = "ringing";
+      statusEl.className   = "ringing";
       dismissBtn.style.display = "block";
-      toggleBtn.style.display = "none";
+      toggleBtn.style.display  = "none";
       startAlarmSound();
     }
 
@@ -211,14 +429,14 @@
       let time = audioCtx.currentTime;
       alarmNodes = [];
       freqs.forEach((freq, i) => {
-        const osc = audioCtx.createOscillator();
+        const osc  = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         osc.type = "sine";
         osc.frequency.value = freq;
         const start = time + i * 0.25;
-        const end = start + 0.2;
+        const end   = start + 0.2;
         gain.gain.setValueAtTime(0, start);
         gain.gain.linearRampToValueAtTime(0.3, start + 0.01);
         gain.gain.linearRampToValueAtTime(0, end);
@@ -232,23 +450,20 @@
     function stopAlarmSound() {
       alarmNodes.forEach(n => { try { n.stop(); } catch (_) {} });
       alarmNodes = [];
-      if (audioCtx) {
-        audioCtx.close();
-        audioCtx = null;
-      }
+      if (audioCtx) { audioCtx.close(); audioCtx = null; }
     }
 
     dismissBtn.addEventListener("click", () => {
-      ringing = false;
+      ringing     = false;
       alarmActive = false;
       document.body.classList.remove("ringing");
       stopAlarmSound();
       dismissBtn.style.display = "none";
-      toggleBtn.style.display = "block";
+      toggleBtn.style.display  = "block";
       toggleBtn.textContent = "セット";
       toggleBtn.classList.remove("active");
       statusEl.textContent = "未設定";
-      statusEl.className = "";
+      statusEl.className   = "";
     });
 
     toggleBtn.addEventListener("click", () => {
@@ -257,18 +472,96 @@
         toggleBtn.textContent = "解除";
         toggleBtn.classList.add("active");
         statusEl.textContent = `${alarmInput.value} にアラーム設定済み`;
-        statusEl.className = "set";
+        statusEl.className   = "set";
       } else {
         alarmActive = false;
         toggleBtn.textContent = "セット";
         toggleBtn.classList.remove("active");
         statusEl.textContent = "未設定";
-        statusEl.className = "";
+        statusEl.className   = "";
       }
     });
 
     setInterval(tick, 1000);
     tick();
+
+    /* ── Pokémon ── */
+    const pokemonInput  = document.getElementById("pokemon-input");
+    const searchBtn     = document.getElementById("search-btn");
+    const pokemonResult = document.getElementById("pokemon-result");
+    const pokemonError  = document.getElementById("pokemon-error");
+
+    const STAT_LABELS = {
+      hp:              { label: "HP",      bar: "bar-hp" },
+      attack:          { label: "攻撃",    bar: "bar-attack" },
+      defense:         { label: "防御",    bar: "bar-defense" },
+      "special-attack":{ label: "特攻",    bar: "bar-spatk" },
+      "special-defense":{ label: "特防",   bar: "bar-spdef" },
+      speed:           { label: "素早さ",  bar: "bar-speed" },
+    };
+
+    async function searchPokemon() {
+      const query = pokemonInput.value.trim().toLowerCase();
+      if (!query) return;
+
+      searchBtn.disabled = true;
+      pokemonError.classList.remove("visible");
+      pokemonResult.classList.remove("visible");
+
+      try {
+        const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${encodeURIComponent(query)}`);
+        if (!res.ok) throw new Error(res.status === 404 ? "見つかりませんでした" : "取得に失敗しました");
+        const data = await res.json();
+        renderPokemon(data);
+      } catch (err) {
+        pokemonError.textContent = err.message;
+        pokemonError.classList.add("visible");
+      } finally {
+        searchBtn.disabled = false;
+      }
+    }
+
+    function renderPokemon(data) {
+      document.getElementById("pokemon-sprite").src = data.sprites.front_default || "";
+      document.getElementById("pokemon-sprite").alt = data.name;
+      document.getElementById("pokemon-name").textContent = data.name;
+      document.getElementById("pokemon-id").textContent   = `No. ${String(data.id).padStart(4, "0")}`;
+
+      const typesEl = document.getElementById("pokemon-types");
+      typesEl.innerHTML = "";
+      data.types.forEach(t => {
+        const badge = document.createElement("span");
+        badge.className   = `type-badge type-${t.type.name}`;
+        badge.textContent = t.type.name;
+        typesEl.appendChild(badge);
+      });
+
+      document.getElementById("pokemon-meta").innerHTML =
+        `<span><strong>${(data.height / 10).toFixed(1)} m</strong> 高さ</span>` +
+        `<span><strong>${(data.weight / 10).toFixed(1)} kg</strong> 重さ</span>` +
+        `<span><strong>${data.base_experience ?? "—"}</strong> 基礎経験値</span>`;
+
+      const statsEl = document.getElementById("pokemon-stats");
+      statsEl.innerHTML = "";
+      data.stats.forEach(s => {
+        const info = STAT_LABELS[s.stat.name] || { label: s.stat.name, bar: "bar-hp" };
+        const pct  = Math.min(100, Math.round((s.base_stat / 255) * 100));
+        statsEl.insertAdjacentHTML("beforeend", `
+          <div class="stat-row">
+            <span class="stat-name">${info.label}</span>
+            <span class="stat-val">${s.base_stat}</span>
+            <div class="stat-bar-bg">
+              <div class="stat-bar ${info.bar}" style="width:${pct}%"></div>
+            </div>
+          </div>
+        `);
+      });
+
+      pokemonResult.classList.add("visible");
+    }
+
+    searchBtn.addEventListener("click", searchPokemon);
+    pokemonInput.addEventListener("keydown", e => { if (e.key === "Enter") searchPokemon(); });
   </script>
 </body>
 </html>
